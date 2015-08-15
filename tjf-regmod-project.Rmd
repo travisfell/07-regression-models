@@ -1,0 +1,45 @@
+---
+title: 'MPG Analysis: Regression Models Course Project'
+author: "Travis Fell"
+date: "August 14, 2015"
+output: html_document
+---
+#Executive Summary
+This analysis strives to answer the questions from data in the mtcars data set: 
+1. Is an automatic or manual transmission better for MPG?
+2. What is the MPG difference between automatic and manual transmissions?
+
+#I. Loading and Exploring the Data
+First, we'll start by loading up the data and packages we need and doing some quick exploratory analysis. 
+
+```{r}
+library(ggplot2)
+library(dplyr)
+data(mtcars)
+head(mtcars)
+summary(mtcars)
+summarize(group_by(mtcars, am), mean(mpg))
+```
+Note that the am column indicates the transmission type of the care; 1 = manual, 0 = automatic. At first blush, the manual transmissions appear to have the edge in MPG, 24.4 to 17.1 for automatics. However, there are other variables that could also have an impact on MPG that we will examine in the following section. 
+
+#II. Isolate Transmission as a Factor of MPG
+As a baseline, we will create a single linear regression between transmission type and MPG. 
+```{r}
+transonly <- lm(mtcars$mpg ~ mtcars$am)
+transonly$coefficients
+g <- ggplot(mtcars, aes(mtcars$mpg, mtcars$am))
+g <- g + geom_point()
+g <- g + geom_smooth(model = "lm", formula = mtcars$mpg ~ mtcars$am)
+```
+
+There are several other factors that could impact MPG. 
+
+
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
