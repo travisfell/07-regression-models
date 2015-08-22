@@ -14,26 +14,71 @@ First, we'll start by loading up the data and packages we need and doing some qu
 
 ```{r}
 library(ggplot2)
+library(GGally)
 library(dplyr)
 data(mtcars)
 head(mtcars)
 summary(mtcars)
-summarize(group_by(mtcars, am), mean(mpg))
+summarize(group_by(mtcars, am), mean(mpg), records = length(mpg))
+s <- ggpairs(c(mtcars$am, mtcars$cyl, mtcars$hp, mtcars$wt), lower = list(continuous = "smooth"), params = c(method = "loess"))
+s
 ```
 Note that the am column indicates the transmission type of the care; 1 = manual, 0 = automatic. At first blush, the manual transmissions appear to have the edge in MPG, 24.4 to 17.1 for automatics. However, there are other variables that could also have an impact on MPG that we will examine in the following section. 
 
 #II. Isolate Transmission as a Factor of MPG
 As a baseline, we will create a single linear regression between transmission type and MPG. 
 ```{r}
-transonly <- lm(mtcars$mpg ~ mtcars$am)
-transonly$coefficients
-g <- ggplot(mtcars, aes(mtcars$mpg, mtcars$am))
+mpgtrans <- lm(mpg ~ am, mtcars)
+summary(mpgtrans)$coefficients
+
+g <- ggplot(mtcars, aes(mtcars$am, mtcars$mpg))
 g <- g + geom_point()
-g <- g + geom_smooth(model = "lm", formula = mtcars$mpg ~ mtcars$am)
+g <- g + geom_smooth(method = 'lm')
+g <- g + ylab("MPG")
+g <- g + xlab("Transmission")
+g
+
 ```
+When taken on its own transmission type has a slope coefficient of 7.2 from automatic to manual (that is, an increase in 7.2 mpg for manual transmission vehicles). However, there are several other factors that could impact MPG. We'll compare transmission type to all variables to begin understanding how they impact transmission type as a predictor of MPG. 
 
-There are several other factors that could impact MPG. 
+```{r}
+mpgall <- lm(mpg ~., mtcars)
+summary(mpgall)$coefficients
+```
+The first thing that sticks out when creating a model with all variables is that the slope coefficient for transmission decreases significantly to 2.52. Thus, other variables in the model have an impact on transmission type as a predictor of MPG. But which ones have the biggest impact and how can they help us understand the true impact of transmission type on MPG?
 
+We'll examine MPG as a function of number of cylindars, displacement, real axle ratio, weight, transmission and forward gears. These factors should have a functional impact on MPG and, thus, the most relevant predictors of MPG. Once we have a feel for the factors with the strongest correlation with MPG, we'll re-run our regression with the appropriate factors. 
+
+```{r}
+p = ggpairs(mtcars, columns = c(1, 2, 3, 5, 6, 9, 10), title = "Predictors of MPG")
+p
+```
+The pairs plot shows that transmission type has a reasonably strong positive correlation with MPG. However, the variables of cylindars, displacement and weight have very strong negative correlations with MPG. Also, since displacement is a measure of total gasoline an engine would use in a single drive cycle, we'll use that variable as a measure instead of cylindars. So will will re-run our regression model with weight and displacement in descending order of correlation. 
+
+```{r}
+mpgtrans2 <- lm(mpg ~ am + wt, mtcars)
+summary(mpgtrans2)$coefficients
+mpgtrans3 <- lm(mpg ~ am + disp, mtcars)
+summary(mpgtrans3)$coefficients
+mpgtrans4 <- lm(mpg ~ am + wt + disp, mtcars)
+summary(mpgtrans4)$coefficients
+
+gwt <- ggplot(mtcars, aes(wt, mpg), colour = am)
+gwt <- gwt + geom_point(aes(colour = am))
+gwt <- gwt + geom_smooth(method = 'lm')
+gwt <- gwt + ylab("MPG")
+gwt <- gwt + xlab("Weight")
+gwt
+
+gds <- ggplot(mtcars, aes(disp, mpg), colour = am)
+gds <- gds + geom_point(aes(colour = am))
+gds <- gds + geom_smooth(method = 'lm')
+gds <- gds + ylab("MPG")
+gds <- gds + xlab("Displacement")
+gds
+
+
+```
 
 
 You can also embed plots, for example:
