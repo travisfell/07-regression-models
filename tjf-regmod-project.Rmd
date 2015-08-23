@@ -6,8 +6,8 @@ output: html_document
 ---
 #Executive Summary
 This analysis strives to answer the questions from data in the mtcars data set: 
-1. Is an automatic or manual transmission better for MPG?
-2. What is the MPG difference between automatic and manual transmissions?
+1. Is an automatic or manual transmission better for MPG? Technically speaking manual is better for MPG, but when accounting for factors that more strongly correlate with MPG, the difference between manual and automatic transmissions is negligible. 
+2. What is the MPG difference between automatic and manual transmissions? When accounting for weight and displacement, the MPG range of improvement for manual transmissions is as follows `r mpgdelta`. 
 
 #I. Loading and Exploring the Data
 First, we'll start by loading up the data and packages we need and doing some quick exploratory analysis. 
@@ -53,21 +53,26 @@ We'll examine MPG as a function of number of cylindars, displacement, real axle 
 p = ggpairs(mtcars, columns = c(1, 2, 3, 5, 6, 9, 10), title = "Predictors of MPG")
 p
 ```
-The pairs plot shows that transmission type has a reasonably strong positive correlation with MPG. However, the variables of cylindars, displacement and weight have very strong negative correlations with MPG. Also, since displacement is a measure of total gasoline an engine would use in a single drive cycle, we'll use that variable as a measure instead of cylindars. So will will re-run our regression model with weight and displacement in descending order of correlation. 
+The pairs plot shows that transmission type has a reasonably strong positive correlation with MPG. However, the variables of cylindars, displacement and weight have very strong negative correlations with MPG. Also, since displacement is a measure of total gasoline an engine would use in a single drive cycle, we'll use that variable as a measure instead of cylindars. So will will re-run our regression model with weight and displacement. 
 
 ```{r}
-mpgtrans2 <- lm(mpg ~ am + wt, mtcars)
+mpgtranswt <- lm(mpg ~ am + wt, mtcars)
 summary(mpgtrans2)$coefficients
-mpgtrans3 <- lm(mpg ~ am + disp, mtcars)
+mpgtransds <- lm(mpg ~ am + disp, mtcars)
 summary(mpgtrans3)$coefficients
-mpgtrans4 <- lm(mpg ~ am + wt + disp, mtcars)
+mpgtranswtds <- lm(mpg ~ am + wt + disp, mtcars)
 summary(mpgtrans4)$coefficients
 
+```
+When using weight as a second regressor, the slope of AM changes dramatically, from 7.2 to -.02. When including displacement in the model, there is a similar reduction to .17. The fact that relationship between MPG and transmission type can be so significantly impacted by other variables should give us pause when evaluating MPG performance purely as a function of transmission type. Rather, it would probably make more sense to take weight, displacement and transmission type into account when evaluating MPG performance. 
+
+```{r}
 gwt <- ggplot(mtcars, aes(wt, mpg), colour = am)
 gwt <- gwt + geom_point(aes(colour = am))
 gwt <- gwt + geom_smooth(method = 'lm')
 gwt <- gwt + ylab("MPG")
 gwt <- gwt + xlab("Weight")
+gwt <- gwt + ggtitle("MPG by Weight and Transmission Type")
 gwt
 
 gds <- ggplot(mtcars, aes(disp, mpg), colour = am)
@@ -75,16 +80,44 @@ gds <- gds + geom_point(aes(colour = am))
 gds <- gds + geom_smooth(method = 'lm')
 gds <- gds + ylab("MPG")
 gds <- gds + xlab("Displacement")
+gds <- gds + ggtitle("MPG by Displacement and Transmission Type")
 gds
 
+```
+In the appendix appear regression plots of MPG by Weight and MPG by Displacement, both of which distinguish manual vs automatic transmission data points. These plots illustrate one of the conclusions of this analysis: to answer the question "Is an automatic or manual transmission better for MPG?", one should consider transmission type along with the most impactful predictors of MPG: Weight and Displacement. 
+
+#A Quick Note on Residuals
+The residuals plots for the mpgtranswt model and the mpgtransds models do not seem to indicate any patterns in the data, unusual results or any other issues that would indicate some poor aspect of model fit.  
+
+```{r}
+#basic residual testing
+par(mfrow = c(2,2))
+plot(mpgtranswt)
+plot(mpgtransds)
+plot(mpgtranswtds)
+
+round(dfbetas(mpgtrans2)[,2],3)
+round(hatvalues(mpgtrans2),3)
+
+round(dfbetas(mpgtrans3)[,2],3)
+round(hatvalues(mpgtrans3),3)
+
+# residuals vs fitted values
+fit <- lm(am ~ . -1, mtcars)
+plot(predict(fit), resid(fit), pch = '.')
 
 ```
+#Predicting the MPG
+To illustrate the impact of transmission type on MPG, we will predict the MPG holding weight constant at 3 tones and displacement constant at 250 while changing transmission type. 
 
+```{r}
+autompg <- predict(mpgtranswtds, data.frame(am = 0,  wt = 3, disp = 250), interval = "prediction")
+manualmpg <- predict(mpgtranswtds, data.frame(am = 1,  wt = 3, disp = 250), interval = "prediction")
 
-You can also embed plots, for example:
+mpgdelta <- manualmpg - autompg
 
-```{r, echo=FALSE}
-plot(cars)
+confint(mpgtranswtds)
 ```
+Using the R predict function, we find that automatic transmission MPG ranges are `r autompg'. 
+By comparison, manual transmission MPG ranges are `r manualmpg`. While manual is slightly better, we can conclude from this data that there is not much change when weight and displacement are taken into account, the difference being `r mpgdelta'. 
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
