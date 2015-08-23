@@ -12,7 +12,7 @@ fit: 0.1777241
 lwr: 0.1816018
 upr:0.17384
 
-###I. Loading and Exploring the Data
+####I. Loading and Exploring the Data
 First, we'll start by loading up the data and packages we need and doing some quick exploratory analysis. 
 
 ```{r results = 'hide', warning=FALSE, message=FALSE}
@@ -22,19 +22,19 @@ summarize(group_by(mtcars, am), mean(mpg), records = length(mpg))
 ```
 Note that the am column indicates the transmission type of the care; 1 = manual, 0 = automatic. At first, the manual transmissions appear to have the edge in MPG, 24.4 to 17.1 for automatics. However, there are other variables that could also have an impact on MPG that we will examine in the following section. 
 
-###II. Isolate Transmission as a Factor of MPG
-As a baseline, we will create a single linear regression between transmission type and MPG. 
+####II. Isolate Transmission as a Factor of MPG
+As a baseline, we will create a single linear regression between transmission type and MPG. See the appendix for a graph of this regression model. 
 ```{r results = 'hide', warning=FALSE}
 mpgtrans <- lm(mpg ~ am, mtcars);summary(mpgtrans)$coefficients
 ```
-When taken on its own transmission type has a slope coefficient of 7.2 from automatic to manual (that is, an increase in 7.2 mpg for manual transmission vehicles). However, there are several other factors that could impact MPG. We'll compare transmission type to all variables to begin understanding how they impact transmission type as a predictor of MPG. See the appendix for a graph of this regression model. 
+On its own, transmission type has a slope coefficient of 7.2 from automatic to manual. However, there are several other factors that could impact MPG. We'll compare transmission type to all variables to begin understanding how they impact transmission type as a predictor of MPG. 
 
 ```{r results = 'hide', warning=FALSE}
 mpgall <- lm(mpg ~., mtcars);summary(mpgall)$coefficients
 ```
-When creating a model with all variables is that the slope coefficient for transmission decreases significantly to 2.52. Thus, other variables in the model have an impact on transmission type as a predictor of MPG. But which ones have the biggest impact and how can they help us understand the true impact of transmission type on MPG?
+When creating a model with all variables, the slope coefficient for transmission decreases significantly to 2.52. But which ones have the biggest impact on MPG and how can they help us understand the true impact of transmission type on MPG?
 
-The pairs plot in the appendix shows that transmission type has a reasonably strong positive correlation with MPG (.6). However, the variables of cylindars (-.852), displacement (-.848) and weight (-.868) have very strong negative correlations with MPG. Also, since displacement is a measure of total gasoline an engine would use in a single drive cycle, we'll use that variable as a measure instead of cylindars. So will will re-run our regression model with weight and displacement. 
+The pairs plot in the appendix shows that transmission type has a reasonably strong positive correlation with MPG (.6). However, the variables of cylindars (-.852), displacement (-.848) and weight (-.868) have very strong negative correlations with MPG. Since displacement is a measure of total gasoline an engine would use in a single drive cycle, we'll use that variable as a measure instead of cylindars. So we will re-run our regression model with weight and displacement. 
 
 ```{r results = 'hide', warning=FALSE}
 mpgtranswt <- lm(mpg ~ am + wt, mtcars); summary(mpgtranswt)$coefficients
@@ -45,10 +45,10 @@ When using weight as a second regressor, the slope of AM changes dramatically, f
 
 In the appendix appear regression plots of MPG by Weight and MPG by Displacement, both of which distinguish manual vs automatic transmission data points. These plots illustrate one of the conclusions of this analysis: to answer the question "Is an automatic or manual transmission better for MPG?", one should consider transmission type along with the most impactful predictors of MPG: Weight and Displacement. 
 
-###III. A Quick Note on Residuals
+####III. A Quick Note on Residuals
 The residuals plot in the appendix for the MPG by transmission, weight and displacement model does not seem to indicate any patterns in the data, unusual results or any other issues that would indicate some poor aspect of model fit.  
 
-###IV. Predicting the MPG
+####IV. Predicting the MPG
 To illustrate the impact of transmission type on MPG, we will predict the MPG holding weight constant at 3 tons and displacement constant at 250 while changing transmission type. 
 ```{r results = 'hide', warning=FALSE}
 autompg <- predict(mpgtranswtds, data.frame(am = 0,  wt = 3, disp = 250), interval = "prediction")
@@ -59,7 +59,6 @@ Using the R predict function, we find that automatic transmission MPG ranges are
 Fit:`r autompg[1]`
 Lower: `r autompg[2]`
 Upper: `r autompg[3]`
-
 By comparison, manual transmission MPG ranges are 
 Fit:`r manualmpg[1]`
 Lower: `r manualmpg[2]`
@@ -75,7 +74,7 @@ The 95% confidence interval for the variables in this model is as follows:
 confint(mpgtranswtds)
 ```
 
-###Appendix
+####Appendix
 Single linear regression between MPG and transmission type.
 
 ```{r echo=FALSE, warning = FALSE, fig.width=4, fig.height=3}
