@@ -13,6 +13,7 @@ plot(shuttle$wind, q2$fitted, pch=19, col="blue", xlab="Wind Type and Speed", yl
 
 #question 3
 q3 <- glm(use ~ wind - 1, family = "binomial", shuttle)
+exp(q1$coefficients)
 exp(q3$coeff)
 summary(q1)$coefficients
 summary(q3)$coefficients
